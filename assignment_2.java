@@ -1,144 +1,260 @@
-/***
- *When the program is run, the user will first enter a string. After that, the program should
-ask the user which operation they want to execute on the string. The available operations are
-listed below: Append, CountWords, Replace, isPalindrome, Splice, Split,
-MaxRepeatingCharacter, Sort, Shift, and Reverse. Each method should perform its
-respective operation based on the user's input.
-Owner : Pratul_Agarwal
-Date of creation : 04/09/2024
+/*
+ *TASK--> When the program is run, the user will first enter a string. After that, the program should ask the user which operation they want to execute on the string. The available operations are
+listed below: > Append                             > Split                                                 
+              > CountWords                         > MaxRepeatingCharacter
+              > Replace                            > Sort
+              > isPalindrome                       > Shift 
+              > Splice                             > Reverse
+*Each method should perform its respective operation based on the user's input.
+*Owner-->Pratul_Agarwal
+*DATE-->04/09/2024
  */
 package assignment_java_programming;
-
 import java.util.Scanner;
-
 public class assignment_2 {
+	// method to append string
+	public static String appendString(String s,String toAppend)
+	{
+		char[] result = new char[s.length() + toAppend.length()];
+		int i=0;
+		for(;i < s.length();i++)
+		{
+			result[i] = s.charAt(i);
+		}
+		for (int j = 0; j < toAppend.length(); j++, i++) {
+		result[i] = toAppend.charAt(j);
+		}
+		return new String(result);
+	}
+	// method to count words
+	public static int countWords(String s)
+	{
+		int count = 0;
+		boolean inword = false;
+		int endword = s.length() - 1;
+		for (int i = 0;i < s.length();i++)
+		{
+			if (Character.isLetter(s.charAt(i)) && i != endword)
+					{
+				inword = true;
+					}
+			else if ( !Character.isLetter(s.charAt(i)) && inword)
+			{
+				count ++;
+				inword = false;
+			}
+			else if (Character.isLetter(s.charAt(i)) && i == endword)
+			{
+				count ++;
+			}
+		}
+		return count ;
+	}
 
-    public static void main(String[] args) {
-    	constant constant = new constant();
-        Scanner scanner = new Scanner(System.in);
-        String tryagain = "y";
-        
-        while (tryagain.equalsIgnoreCase("y")) {
-        System.out.println(constant.ENTER_STRING6);
-        String input = scanner.nextLine();
-
-        // Present operations to the user
-        System.out.println("Which operation you want to execute on the string.");
-        System.out.println("1. Append");
-        System.out.println("3. Replace");
-        System.out.println("4. isPalindrome");
-        System.out.println("5. Splice");
-        System.out.println("7. MaxRepeatingCharacter");
-        System.out.println("8. Sort");
-        System.out.println("9. Shift");
-        System.out.println("10. Reverse");
-
-        int choice = scanner.nextInt();
-        scanner.nextLine();  
-
-        switch (choice) {
-            case 1:
-                System.out.println("Enter string to append:");
-                String appendStr = scanner.nextLine();
-                System.out.println("Result: " +Append_String(input, appendStr));
-                break;
-            case 3:
-                System.out.println("Enter target substring to replace:");
-                String target = scanner.nextLine();
-                System.out.println("Enter replacement substring:");
-                String replacement = scanner.nextLine();
-                System.out.println("Result: " + replace(input, target, replacement));
-                break;                     
-            case 7:
-                System.out.println("Max repeating character: " + maxRepeatingCharacter(input));
-                break;
-            case 8:
-                System.out.println("Sorted string: " + sort(input));
-                break;
-            case 9:
-                System.out.println("Enter shift amount:");
-                int shiftAmount = scanner.nextInt();
-                scanner.nextLine();  // Consume newline character
-                System.out.println("Result: " + shift(input, shiftAmount));
-                break;
-            case 10:
-                System.out.println("Reversed string: " + reverse(input));
-                break;
-            default:
-                System.out.println("Invalid choice.");
-        }
-        System.out.print(constant.TRY_AGAIN);
-        tryagain = scanner.nextLine();
-    }
-
-    System.out.println("Program terminated.");
-    scanner.close(); } 
-
-    // Append a string
-    public static String Append_String(String input, String appendStr) {
-    	input+= appendStr;
-        System.out.println("Given String: " + input);
-        return input; // Return the updated string
-    }
-
-    // Replace a substring with another substring
-    public static String replace(String str, String target, String replacement) {
-        return str.replace(target, replacement);
-    }
-
+	// method to replace
+public static String replaceChar(String original,char oldchar,char newchar)
+	
+	{
+		char[] result = new char[original.length()];
+		
+		for(int i = 0;i < original.length();i++)
+			
+		   {
+			if(original.charAt(i) == oldchar)
+			{
+				result[i] = newchar;
+			}
+			else 
+			{
+				result[i] = original.charAt(i);
+			}
+			}
+		return new String(result);
+		}
+	public static boolean isPalindrome(String str)
+	{
+		if(str == null || str.length() == 0)
+		{
+			return true;
+		}
+		
+		for(int i = 0; i <= str.length()/2;i++)
+		{
+			char start = str.charAt(i);
+			char end =str.charAt(str.length() - 1 - i);
+		
+		if (start != end)
+		{
+			return false;
+		}
+		}
+		return true;
+	}
+	
+	//method to splice string
+    public static String stringSplicer(String str ,int start,int end )
+    {
+    	int newlen = str.length() - end ;
+    	char[] result = new char [newlen];
+    	int in = 0;
+    	for (int i = 0 ;i < start;i++ )
+    	{
+    		result[in++] = str.charAt(i);
+    	}
+    	for (int i = start + end ;i < str.length();i++)
+    	{
+    		result[in++] = str.charAt(i);
+    		
+    	}
+    		return new String(result);
+      }
     
-    // Find the maximum repeating character
-    public static char maxRepeatingCharacter(String str) {
-        int[] charCount = new int[256]; 
-        for (int i = 0; i < str.length(); i++) {
-            charCount[str.charAt(i)]++;
-        }
-
-        int maxCount = -1;
-        char result = '\0';
-        for (int i = 0; i < charCount.length; i++) {
-            if (charCount[i] > maxCount) {
-                maxCount = charCount[i];
-                result = (char) i;
-            }
-        }
-        return result;
+    // method to split string
+    public static String[] stringSplitter(String str,String limit)
+    {
+    	return str.split(limit);    	
     }
-
-    // Sort the characters of the string
-    public static String sort(String str) {
-        char[] chars = str.toCharArray();
-        for (int i = 0; i < chars.length - 1; i++) {
-            for (int j = i + 1; j < chars.length; j++) {
-                if (chars[i] > chars[j]) {
-                    char temp = chars[i];
-                    chars[i] = chars[j];
-                    chars[j] = temp;
-                }
-            }
-        }
-        return new String(chars);
+    public static char maxRepeat(String str)
+    {
+    	int maxcount = 0;
+    	char maxChar = '\0';
+    	for (int i = 0;i < str.length();i++)
+    	{
+    		 char currentChar = str.charAt(i);
+             int count = 0;
+             for (int j = 0; j < str.length(); j++) {
+                 if (str.charAt(j) == currentChar) {
+                     count++;
+                 }
+             }
+             if (count > maxcount) {
+                maxcount = count;
+                 maxChar = currentChar;
+             }
+         }
+         return maxChar;
+     }
+    
+    // method to sort string
+    public static String stringSorting(String str)
+    {
+    	char temp;
+    	char string[] = str.toCharArray();
+    	for(int i = 0 ;i < string.length; i++)
+    	{
+    		for(int j = i + 1;j < string.length; j++ )
+    		{
+    			if(string[i]>string[j])
+    			{
+    				temp = string[i];
+    				string[i] = string[j];
+    				string[j] = temp;
+     			}
+    		}
+    	}
+    	return new String(string);
     }
-
-    // Shift characters in the string by a given amount
-    public static String shift(String str, int shiftAmount) {
+    
+    // method to shift string
+    public static String stringShifter(String str, int shift) {
         int length = str.length();
-        shiftAmount = (shiftAmount % length + length) % length; // Handle negative shift amounts
-        return str.substring(length - shiftAmount) + str.substring(0, length - shiftAmount);
-    }
-
-    // Reverse the string
-    public static String reverse(String str) {
-        char[] chars = str.toCharArray();
-        int left = 0, right = chars.length - 1;
-        while (left < right) {
-            char temp = chars[left];
-            chars[left] = chars[right];
-            chars[right] = temp;
-            left++;
-            right--;
+        shift = shift % length;      
+        char[] shifted = new char[length];
+        for (int i = 0; i < length; i++) {
+            int newPosition = (i + shift) % length;
+            shifted[newPosition] = str.charAt(i);
         }
-        return new String(chars);
+        return new String(shifted);
     }
-}
+	   public static String stringReverse(String str) {
+	        char[] result = new char[str.length()];
+	        for (int i = 0; i < str.length(); i++) {
+	            result[i] = str.charAt(str.length() - 1 - i);
+	        }
+	        return new String(result);
+	    }
+	   
+public static void main(String[] args) {
+		
+  Scanner input =new Scanner(System.in);
+  String response;
+  do
+  {
+  System.out.println(Constant2.INPUTSTR);
+  String str = input.nextLine();
+  System.out.println(Constant2.INDEX);
+  System.out.println(Constant2.CHOICE); 
+ int choice = input.nextInt();
+ input.nextLine();
+ 
+ switch (choice)
+ {
+ case 1:
+	 System.out.println(Constant2.APPEND);
+     String toAppend = input.nextLine();
+     System.out.println("Appended String: " + appendString(str, toAppend));
+	 break;
+ case 2:
+	 System.out.println("Word count: " + countWords(str));
+	 break;
+ case 3:
+	   System.out.println(Constant2.REPLACE);
+       char oldChar = input.nextLine().charAt(0);
+       System.out.println(Constant2.NEW);
+       char newChar = input.nextLine().charAt(0);
+       System.out.println("New String " + replaceChar(str, oldChar, newChar));
+	 break;
+ case 4:
+	  System.out.println(Constant2.PALINDROME + isPalindrome(str));
+	 break;
+ case 5:
+     System.out.println(Constant2.SPLICE);
+     int start = input.nextInt();
+     System.out.println(Constant2.REMOVE);
+     int length = input.nextInt();
+     input.nextLine(); 
+     System.out.println("The spliced string :" + stringSplicer(str, start, length));
 
+	 break;
+ case 6:
+	 
+	 String delimiter = " ";
+	    String[] words = stringSplitter(str, delimiter);
+
+	    System.out.println("Original String: " + str);
+	    System.out.println("Split Strings:");
+	    for (String word : words) {
+	        System.out.println(word);
+	    }
+	 
+	 break;
+ case 7:
+	  System.out.println(Constant2.MAXSTR + maxRepeat(str));
+	 break;
+ case 8:
+	 System.out.println(Constant2.SORTEDSTR + stringSorting(str));
+	 break;
+ case 9:
+
+     System.out.println(Constant2.POSISHIFT);
+     int shift = input.nextInt();
+     String shiftedString = stringShifter(str, shift);
+     System.out.println(Constant2.SHIFTEDSTR + shiftedString);
+     input.nextLine();
+	 break;
+ case 10:
+	 System.out.println("Reversed string: " + stringReverse(str));
+	 break;
+ default:
+		 System.out.println("Invalid choice");
+		 break;
+ }
+ System.out.println( Constant2.ASKAGAIN);
+ 
+ response = input.nextLine();
+  }
+  while(response.equalsIgnoreCase("yes"));
+ input.close();
+
+	}
+}
