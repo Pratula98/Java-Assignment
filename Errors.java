@@ -1,7 +1,7 @@
 /**
  * This class contains a set of error string that are used throughout the program to display errors .
  * Owner-->Pratul Agarwal
- * Date-->09/09/2024
+ * Date of creation -->09/09/2024
  */
 package assignment_java_programming;
 
