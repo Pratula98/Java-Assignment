@@ -1,439 +1,354 @@
 /***
- * 2048 Game 
+ * GAME OF 2048
  * Owner : Pratul Agarwal
- * Date of creation : 17/09/2024
+ * Created On : 17/09/2024
  */
-package assignment_java_programming;
+package assignment_java;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter; // enables writing game data to a file
 import java.util.Random;
 import java.util.Scanner;
 
-/**
- * A class representing the 2048 game. Implements Serializable to allow saving and loading game states.
- */
-public class gameOf2048 implements Serializable {
-    public static final int SIZE = 4;
-    public static final char MOVE_LEFT = 'A';
-    public static final char MOVE_RIGHT = 'D';
-    public static final char MOVE_UP = 'W';
-    public static final char MOVE_DOWN = 'S';
+public class Game2048 {
 
-    private int[][] gameboard;  // Game grid
-    private Random random;  // Random number generator for spawning new tiles
-    private transient Scanner input;  // Scanner for user input, marked as transient since it's not serialized
-    private String userName;  // Stores the player's name
+    private static final int GRIDSIZE = 4;
+    private int[][] gameBoard;// 2D array representing the game board
+    private Random random; // creates an instance of Random to generate random numbers for tile placement.
+    private Scanner userInput;
+    private String playerName;
+    private int score;
 
-    /**
-     * Constructor for initializing the game with the player's name.
-     *
-     * @param userName The name of the user.
-     */
-    public gameOf2048(String userName) {
-        this.userName = userName;
-        gameboard = new int[SIZE][SIZE];  // Initialize gameboard
-        random = new Random();  // Initialize random number generator
-        input = new Scanner(System.in);  // Initialize scanner for user input
+    public Game2048() {
+    	gameBoard = new int[GRIDSIZE][GRIDSIZE]; // initializes the 4x4 game board with zeros (empty)
+        random = new Random();
+        userInput = new Scanner(System.in);
     }
 
     /**
-     * Asks for the user’s name and returns it.
-     *
-     * @return The name entered by the user.
+     * Main method that drives the game loop.
+     * Asks the user for their name, whether they want to load a game,
+     * and processes player input for movements and game actions.
      */
-    public static String askForUserName() {
-        Scanner input = new Scanner(System.in);
+    public void play() {
+        System.out.print("[[[GAME OF 2048]]]\n");
         System.out.print("Enter your name: ");
-        return input.nextLine();
-    }
+        playerName = userInput.nextLine();
+        System.out.print("Load saved game? (Y/N): ");
+        char choice = userInput.nextLine().toUpperCase().charAt(0);
 
-    /**
-     * Saves the current game state to a file "saved_game.ser".
-     */
-    public void saveGame() {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("saved_game.ser"))) {
-            out.writeObject(this);  // Write the current game state
-            System.out.println("Game saved successfully.");
-        } catch (IOException e) {
-            System.out.println("Failed to save the game.");
+        if (choice == 'Y') {
+            loadGame();
+        } else {
+            startNewGame();
         }
-    }
 
-    /**
-     * Loads the saved game from the "saved_game.ser" file.
-     *
-     * @return Returns the saved game object or null if no saved game is found.
-     */
-    public static gameOf2048 loadGame() {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("saved_game.ser"))) {
-            return (gameOf2048) in.readObject();  // Return the deserialized game state
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("No saved game found.");
-            return null;
-        }
-    }
-
-    /**
-     * Displays the game board in a formatted way.
-     */
-    public void showBoard() {
-        for (int i = 0; i < SIZE; i++) {
-            System.out.print("-------");
-        }
-        System.out.println();
-
-        for (int i = 0; i < SIZE; i++) {
-            System.out.print("|");
-            for (int j = 0; j < SIZE; j++) {
-                System.out.print("      |");
+        while (true) {
+            clearConsole(); // Simulates console clearing
+            printBoard();
+            if (isGameOver()) {
+                System.out.println("Game Over!");
+                break;
             }
-            System.out.println();
 
-            System.out.print("|");
-            for (int j = 0; j < SIZE; j++) {
-                if (gameboard[i][j] == 0) {
-                    System.out.printf("  %-3s |", "");
-                } else {
-                    System.out.printf("  %-3s |", "" + gameboard[i][j]);
+            System.out.println("Choose an option: ");
+            System.out.println("U: Move Up");
+            System.out.println("L: Move Left");
+            System.out.println("D: Move Down");
+            System.out.println("R: Move Right");
+            System.out.println("E: Exit");
+            System.out.print("Enter option: ");
+            char option = userInput.nextLine().trim().toUpperCase().charAt(0);
+
+            switch (option) {
+                case 'U' -> moveUp();
+                case 'L' -> moveLeft();
+                case 'D' -> moveDown();
+                case 'R' -> moveRight();
+                case 'E' -> {
+                    System.out.println("Exiting the game...");
+                    exitMenu();
+                    userInput.close();
+                    return;
                 }
+                default -> System.out.println("Invalid option. Please try again.");
             }
-            System.out.println();
 
-            System.out.print("|");
-            for (int j = 0; j < SIZE; j++) {
-                System.out.print("      |");
+            if (!isBoardFull()) {
+                addNewTile();
             }
-            System.out.println();
+        }
+    }
 
-            for (int j = 0; j < SIZE; j++) {
-                System.out.print("-------");
-            }
+    /**
+     * Simulates clearing the console by printing multiple new lines.
+     */
+    private void clearConsole() {
+        for (int i = 0; i < 50; i++) {
             System.out.println();
         }
     }
 
     /**
-     * Adds a random digit (2 or 4) to an empty spot on the game board.
-     *
-     * @param digit The digit to add (typically 2 or 4).
+     * Starts a new game by clearing the board and adding two new tiles.
      */
-    public void addRandomDigit(int digit) {
-        int i, j;
+    private void startNewGame() {
+        clearBoard();       
+        addNewTile();
+        addNewTile();
+    }
+
+    /**
+     * Clears the game board by setting all values to 0 and resets the score.
+     */
+    private void clearBoard() {
+        for (int row = 0; row < GRIDSIZE; row++) {
+            for (int col = 0; col < GRIDSIZE; col++) {
+            	gameBoard[row][col] = 0;
+            }
+        }
+        score = 0;
+    }
+
+    /**
+     * Adds a new tile (either 2 or 4) at a random empty position on the board.
+     */
+    private void addNewTile() {
+        int row, col;
         do {
-            i = random.nextInt(SIZE);
-            j = random.nextInt(SIZE);
-        } while (gameboard[i][j] != 0);  // Find a random empty spot
-
-        gameboard[i][j] = digit;
+            row = random.nextInt(GRIDSIZE);
+            col = random.nextInt(GRIDSIZE);
+        } while (gameBoard[row][col] != 0);
+        gameBoard[row][col] = random.nextInt(10) == 0 ? 4 : 2;
     }
 
     /**
-     * Searches for a specific value on the game board.
-     *
-     * @param x The value to search for (e.g., 2048).
-     * @return True if the value is found, false otherwise.
+     * Moves all tiles to the left and merges them if needed.
      */
-    public boolean searchOnBoard(int x) {
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                if (gameboard[i][j] == x) {
-                    return true;
+    private void moveLeft() {
+        for (int row = 0; row < GRIDSIZE; row++) {
+            mergeRow(gameBoard[row]);
+        }
+    }
+
+    /**
+     * Moves all tiles to the right and merges them if needed.
+     * Reverses the row before and after merging to simulate right movement.
+     */
+    private void moveRight() {
+        for (int row = 0; row < GRIDSIZE; row++) {
+            reverse(gameBoard[row]);
+            mergeRow(gameBoard[row]);
+            reverse(gameBoard[row]);
+        }
+    }
+
+    /**
+     * Moves all tiles upwards and merges them if needed.
+     */
+    private void moveUp() {
+        for (int col = 0; col < GRIDSIZE; col++) {
+            int[] column = getColumn(col);
+            mergeRow(column);
+            setColumn(col, column);
+        }
+    }
+
+    /**
+     * Moves all tiles downwards and merges them if needed.
+     * Reverses the column before and after merging to simulate downward movement.
+     */
+    private void moveDown() {
+        for (int col = 0; col < GRIDSIZE; col++) {
+            int[] column = getColumn(col);
+            reverse(column);
+            mergeRow(column);
+            reverse(column);
+            setColumn(col, column);
+        }
+    }
+
+    /**
+     * Merges the values of a row or column by moving all non-zero values together,
+     * then combining adjacent values if they are the same.
+     * @param row An array representing a row or column on the board.
+     */
+    private int[] mergeRow(int[] row) {
+        int[] newRow = new int[GRIDSIZE];
+        int index = 0;
+        for (int i = 0; i < GRIDSIZE; i++) {
+            if (row[i] != 0) {
+                if (index > 0 && newRow[index - 1] == row[i]) {
+                    newRow[index - 1] *= 2;
+                    score += newRow[index - 1];
+                } else {
+                    newRow[index] = row[i];
+                    index++;
                 }
             }
         }
-        return false;
+        return newRow;
     }
 
     /**
-     * Checks if the player has won the game by reaching 2048.
-     *
-     * @return True if 2048 is found, false otherwise.
+     * Reverses the contents of a row or column.
+     * @param row An array representing a row or column on the board.
      */
-    public boolean gameWon() {
-        return searchOnBoard(2048);
+    private void reverse(int[] row) {
+        for (int i = 0; i < GRIDSIZE / 2; i++) {
+            int temp = row[i];
+            row[i] = row[GRIDSIZE - 1 - i];
+            row[GRIDSIZE - 1 - i] = temp;
+        }
     }
 
     /**
-     * Checks if the player can make any valid moves.
-     *
-     * @return True if a move is possible, false otherwise.
+     * Extracts a column from the board.
+     * @param index The column index to extract.
+     * @return An array representing the column.
      */
-    public boolean userCanMakeAMove() {
-        for (int i = 0; i < SIZE - 1; i++) {
-            for (int j = 0; j < SIZE - 1; j++) {
-                if (gameboard[i][j] == gameboard[i][j + 1] || gameboard[i][j] == gameboard[i + 1][j]) {
-                    return true;
+    private int[] getColumn(int colIndex) {
+        int[] column = new int[GRIDSIZE];
+        for (int row = 0; row < GRIDSIZE; row++) {
+            column[row] = gameBoard[row][colIndex];
+        }
+        return column;
+    }
+
+    /**
+     * Updates the board with the values from the provided column array.
+     * @param index The column index to update.
+     * @param column The new column values.
+     */
+    private void setColumn(int colIndex, int[] column) {
+        for (int row = 0; row < GRIDSIZE; row++) {
+            gameBoard[row][colIndex] = column[row];
+        }
+    }
+
+    /**
+     * Checks if the board is full.
+     * @return True if no empty spaces are left, false otherwise.
+     */
+    private boolean isBoardFull() {
+        for (int row = 0; row < GRIDSIZE; row++) {
+            for (int col = 0; col < GRIDSIZE; col++) {
+                if (gameBoard[row][col] == 0) {
+                    return false;
                 }
             }
         }
-        for (int j = 0; j < SIZE - 1; j++) {
-            if (gameboard[SIZE - 1][j] == gameboard[SIZE - 1][j + 1]) {
-                return true;
-            }
-        }
-        for (int i = 0; i < SIZE - 1; i++) {
-            if (gameboard[i][SIZE - 1] == gameboard[i + 1][SIZE - 1]) {
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
 
     /**
-     * Checks if the game is over, either due to winning or having no valid moves left.
-     *
+     * Checks if the game is over, i.e., the board is full and no moves are possible.
      * @return True if the game is over, false otherwise.
      */
-    public boolean isGameOver() {
-        return gameWon() || (!searchOnBoard(0) && !userCanMakeAMove());
-    }
-
-    /**
-     * Gets the user's move choice (W, A, S, D or E for exit).
-     *
-     * @return The chosen move as a character.
-     */
-    public char getUserMove() {
-        System.out.println("Choose a move: ");
-        System.out.println("W/w: Up");
-        System.out.println("S/s: Down");
-        System.out.println("A/a: Left");
-        System.out.println("D/d: Right");
-        System.out.println("E/e: Exit Game");
-        System.out.print("Enter move: ");
-
-        String moveInput = input.nextLine();
-        if (moveInput.equalsIgnoreCase("a") || moveInput.equalsIgnoreCase("w") || moveInput.equalsIgnoreCase("s")
-                || moveInput.equalsIgnoreCase("d") || moveInput.equalsIgnoreCase("e")) {
-            return moveInput.toUpperCase().charAt(0);
+    private boolean isGameOver() {
+        if (!isBoardFull()) return false;
+        for (int row = 0; row < GRIDSIZE; row++) {
+            for (int col = 0; col < GRIDSIZE; col++) {
+                if (row < GRIDSIZE - 1 && gameBoard[row][col] == gameBoard[row + 1][col]) return false;
+                if (col < GRIDSIZE - 1 && gameBoard[row][col] == gameBoard[row][col + 1]) return false;
+            }
         }
-
-        System.out.println("Invalid Input!\n");
-        showBoard();
-
-        return getUserMove();
+        return true;
     }
 
     /**
-     * Processes the player's move and updates the game board accordingly.
-     *
-     * @param move The move to process ('A', 'D', 'W', 'S', or 'E' for exit).
+     * Prints the current state of the game board, along with the player name and score.
      */
-    public void processMove(char move) {
-        switch (move) {
-            case MOVE_LEFT:
-                for (int i = 0; i < SIZE; i++) {
-                    gameboard[i] = processLeftMove(gameboard[i]);
+    private void printBoard() {
+        String horizontalBorder = "+----+----+----+----+";
+        System.out.println("***GAME OF 2048***");
+        System.out.println("[Player Name]: " + playerName);
+        System.out.println("[Total Score]: " + score);
+
+        for (int row = 0; row < GRIDSIZE; row++) {
+            System.out.println(horizontalBorder);
+            for (int col = 0; col < GRIDSIZE; col++) {
+                if (gameBoard[row][col] == 0) {
+                    System.out.print("|    ");
+                } else {
+                    System.out.printf("|%4d", gameBoard[row][col]);
                 }
-                break;
-            case MOVE_RIGHT:
-                for (int i = 0; i < SIZE; i++) {
-                    gameboard[i] = processRightMove(gameboard[i]);
+            }
+            System.out.println("|");
+        }
+        System.out.println(horizontalBorder);
+    }
+
+    /**
+     * Saves the current game state to a file named "<playerName>_game_save.txt".
+     */
+    private void saveGame() {
+        try (PrintWriter writer = new PrintWriter(new File(playerName + "_game_save.txt"))) {
+            writer.println(score);
+            for (int[] row : gameBoard) {
+                for (int tile : row) {
+                    writer.print(tile + " ");
                 }
-                break;
-            case MOVE_UP:
-                for (int j = 0; j < SIZE; j++) {
-                    int[] column = new int[SIZE];
-                    for (int i = 0; i < SIZE; i++) {
-                        column[i] = gameboard[i][j];
-                    }
-                    column = processLeftMove(column);
-                    for (int i = 0; i < SIZE; i++) {
-                        gameboard[i][j] = column[i];
-                    }
+                writer.println();
+            }
+            System.out.println("Game saved successfully!");
+        } catch (FileNotFoundException e) {
+            System.out.println("Error saving game: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Loads a saved game state from a file named "<playerName>_game_save.txt".
+     */
+    private void loadGame() {
+        try (Scanner fileScanner = new Scanner(new File(playerName + "_game_save.txt"))) {
+            score = Integer.parseInt(fileScanner.nextLine());
+            for (int row = 0; row < GRIDSIZE; row++) {
+                for (int col = 0; col < GRIDSIZE; col++) {
+                	gameBoard[row][col] = fileScanner.nextInt();
                 }
-                break;
-            case MOVE_DOWN:
-                for (int j = 0; j < SIZE; j++) {
-                    int[] column = new int[SIZE];
-                    for (int i = 0; i < SIZE; i++) {
-                        column[i] = gameboard[i][j];
-                    }
-                    column = processRightMove(column);
-                    for (int i = 0; i < SIZE; i++) {
-                        gameboard[i][j] = column[i];
-                    }
-                }
-                break;
-            case 'E':
-                showExitOptions();
-                break;
-        }
-    }
-
-    /**
-     * Displays exit options (Save, New Game, or Exit).
-     */
-    public void showExitOptions() {
-        System.out.println("1. Save Game");
-        System.out.println("2. Start a New Game");
-        System.out.println("3. Exit");
-        System.out.print("Choose an option: ");
-        int choice = input.nextInt();
-        input.nextLine();  // Consume newline
-
-        switch (choice) {
-            case 1:
-                saveGame();
-                break;
-            case 2:
-                startNewGame();
-                break;
-            case 3:
-                System.exit(0);
-                break;
-        }
-    }
-
-    /**
-     * Starts a new game by reinitializing the gameboard.
-     */
-    public void startNewGame() {
-        gameboard = new int[SIZE][SIZE];  // Reinitialize gameboard
-        System.out.println("Starting a new game...");
-        playGame();  // Start a new game loop
-    }
-
-    /**
-     * Processes leftward movement of tiles.
-     *
-     * @param line A row or column of tiles.
-     * @return The updated line after processing.
-     */
-    public int[] processLeftMove(int[] line) {
-        line = moveDigitsToLeft(line);
-        line = mergeLeft(line);
-        return moveDigitsToLeft(line);
-    }
-
-    /**
-     * Processes rightward movement of tiles.
-     *
-     * @param line A row or column of tiles.
-     * @return The updated line after processing.
-     */
-    public int[] processRightMove(int[] line) {
-        line = moveDigitsToRight(line);
-        line = mergeRight(line);
-        return moveDigitsToRight(line);
-    }
-
-    /**
-     * Merges tiles that are the same and to the left.
-     *
-     * @param line A row or column of tiles.
-     * @return The updated line after merging.
-     */
-    public int[] mergeLeft(int[] line) {
-        for (int i = 0; i < SIZE - 1; i++) {
-            if (line[i] == line[i + 1]) {
-                line[i] *= 2;
-                line[i + 1] = 0;
             }
+            System.out.println("Game loaded successfully!");
+        } catch (FileNotFoundException e) {
+            System.out.println("No saved game found. Starting a new game.");
+            startNewGame();
         }
-        return line;
     }
-
+    private void startNewGameAfterExit() {
+    	 clearBoard();
+         play();
+         printBoard();
+         addNewTile();
+         addNewTile();
+    }
     /**
-     * Merges tiles that are the same and to the right.
-     *
-     * @param line A row or column of tiles.
-     * @return The updated line after merging.
+     * Displays the exit menu with options to start a new game, save the game, or exit.
      */
-    public int[] mergeRight(int[] line) {
-        for (int i = SIZE - 1; i > 0; i--) {
-            if (line[i] == line[i - 1]) {
-                line[i] *= 2;
-                line[i - 1] = 0;
-            }
-        }
-        return line;
-    }
+    private void exitMenu() {
+        System.out.println("Choose an exit option:");
+        System.out.println("1: Start a new game");
+        System.out.println("2: Save and exit");
+        System.out.println("3: Exit without saving");
+        System.out.print("Enter your choice: ");
+        int exitChoice = userInput.nextInt();
+        userInput.nextLine(); // consume newline
 
-    /**
-     * Moves non-zero digits in a row or column to the left.
-     *
-     * @param line A row or column of tiles.
-     * @return The updated line after moving.
-     */
-    public int[] moveDigitsToLeft(int[] line) {
-        int[] temp = new int[SIZE];
-        int index = 0;
-        for (int i = 0; i < SIZE; i++) {
-            if (line[i] != 0) {
-                temp[index++] = line[i];
-            }
-        }
-        return temp;
-    }
-
-    /**
-     * Moves non-zero digits in a row or column to the right.
-     *
-     * @param line A row or column of tiles.
-     * @return The updated line after moving.
-     */
-    public int[] moveDigitsToRight(int[] line) {
-        int[] temp = new int[SIZE];
-        int index = SIZE - 1;
-        for (int i = SIZE - 1; i >= 0; i--) {
-            if (line[i] != 0) {
-                temp[index--] = line[i];
-            }
-        }
-        return temp;
-    }
-
-    /**
-     * Starts the game and handles the main game loop.
-     */
-    public void playGame() {
-        System.out.println("Welcome " + userName + "! Let's play 2048!");
-        showBoard();
-        addRandomDigit(2);  // Add the first random digit to the board
-        addRandomDigit(2);  // Add the second random digit to the board
-
-        while (!isGameOver()) {
-            showBoard();
-            char move = getUserMove();
-            processMove(move);
-            if (move != 'E') {
-                addRandomDigit(2);  // Add a new random digit after a move
-            }
-        }
-
-        if (gameWon()) {
-            System.out.println("Congratulations, " + userName + "! You've won the game!");
-        } else {
-            System.out.println("Game over, " + userName + ". Better luck next time!");
+        switch (exitChoice) {
+            case 1 -> startNewGameAfterExit();
+            case 2 -> saveGame();
+            case 3 -> System.exit(0);
+            default -> System.out.println("Invalid choice. Exiting without saving.");
         }
     }
+    
 
     /**
-     * Main method to start the game. Provides options to load a saved game or start a new one.
+     * Main method to start the game.
+     * @param args Command-line arguments (not used).
      */
     public static void main(String[] args) {
-        Scanner input = new Scanner(System.in);
-
-        System.out.println("2048 Game");
-        System.out.println("1. Start a New Game");
-        System.out.println("2. Load a Saved Game");
-
-        int choice = input.nextInt();
-        input.nextLine();  // Consume newline
-
-        if (choice == 1) {
-            String userName = askForUserName();
-            gameOf2048 newGame = new gameOf2048(userName);
-            newGame.playGame();
-        } else if (choice == 2) {
-            gameOf2048 savedGame = loadGame();
-            if (savedGame != null) {
-                savedGame.input = new Scanner(System.in);  // Reinitialize transient scanner
-                savedGame.playGame();
-            } else {
-                System.out.println("No saved game to load.");
-            }
-        }
+        Game2048 game = new Game2048();
+        game.play();
     }
 }
